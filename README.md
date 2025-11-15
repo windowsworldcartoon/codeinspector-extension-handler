@@ -138,10 +138,34 @@ export default MyExtension;
 
 ## Publishing Your Extension
 
-1. Create a public npm package for your extension
-2. In your `manifest.json`, reference this handler as a dependency
-3. Users can install your extension via npm
-4. CodeInspector will dynamically load it
+Use the CodeInspector CLI to publish your extension:
+
+```bash
+codeinspector publish <path-to-extension>
+```
+
+This command will:
+1. Validate your extension manifest
+2. Initialize a git repository (if needed)
+3. Create an initial commit
+4. Push to a git repository or GitHub
+5. Create a GitHub release
+
+Example:
+```bash
+codeinspector publish ./my-extension
+```
+
+You can also use the CodeInspector CLI interactively without specifying a path:
+```bash
+codeinspector publish
+```
+
+The CLI will guide you through:
+- Selecting where to publish (GitHub or git repository)
+- Adding remote origin if needed
+- Creating and pushing commits
+- Creating GitHub releases with your package version
 
 ## License
 
