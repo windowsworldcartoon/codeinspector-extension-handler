@@ -1,0 +1,9 @@
+src
+tsconfig.json
+test.js
+.git
+.gitignore
+*.test.js
+node_modules
+.DS_Store
+PUBLISH.md
