@@ -1,13 +1,19 @@
 {
-  "name": "@windowsworldcartoon/codeinspector-extension-handler",
+  "name": "@codeinspector/extension-handler",
   "version": "1.0.0",
-  "description": "Extension handler and base class for CodeInspector extensions",
+  "description": "Extension handler and utilities for CodeInspector extensions",
   "main": "dist/index.js",
-  "types": "dist/index.d.ts",
+  "public": true,
+  "exports": {
+    ".": {
+      "import": "./dist/index.js",
+      "require": "./dist/index.js"
+    }
+  },
   "scripts": {
     "build": "tsc",
-    "test": "node test.js",
-    "prepublish": "npm run build"
+    "watch": "tsc --watch",
+    "test": "node dist/test.js"
   },
   "keywords": [
     "codeinspector",
@@ -17,7 +23,7 @@
     "developer-tools",
     "electron"
   ],
-  "author": "CodeInspector Team",
+  "author": "windowsworldcartoon",
   "license": "MIT",
   "repository": {
     "type": "git",
@@ -28,11 +34,12 @@
   },
   "homepage": "https://github.com/windowsworldcartoon/codeinspector-extension-handler#readme",
   "files": [
-    "dist",
+    "dist/",
     "README.md",
     "CHANGELOG.md"
   ],
   "devDependencies": {
-    "typescript": "^5.0.0"
+    "typescript": "^5.0.0",
+    "@types/node": "^20.0.0"
   }
 }

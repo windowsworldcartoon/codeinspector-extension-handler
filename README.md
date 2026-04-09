@@ -1,50 +1,100 @@
-# @windowsworldcartoon/codeinspector-extension-handler
+# @codeinspector/extension-handler
 
-Extension handler and base class for creating CodeInspector extensions.
+Lightweight utility functions for creating CodeInspector extensions. Provides a functional API for registering commands, menus, webviews, and activity items.
 
 ## Installation
 
 ```bash
-npm install @windowsworldcartoon/codeinspector-extension-handler
+npm install @codeinspector/extension-handler
 ```
 
 ## Usage
 
-Create an extension by extending the `Extension` class:
+### Basic Setup
+
+Create an extension using the functional API. Supports both ES modules and CommonJS.
+
+#### CommonJS
 
 ```javascript
-const Extension = require('@windowsworldcartoon/codeinspector-extension-handler');
+const code = require('@codeinspector/extension-handler');
 
-class MyExtension extends Extension {
-  activate() {
-    console.log(`${this.name} activated`);
-    
-    // Register commands
-    this.registerCommand('myext.action', () => {
-      this.showNotification('My Extension', 'Action executed!');
-      return { status: 'success' };
-    });
-    
-    // Register menu items
-    this.registerMenu({
-      id: 'myext-menu',
-      label: 'My Extension',
-      submenu: [
-        {
-          id: 'myext.action',
-          label: 'Execute Action',
-          command: 'myext.action'
-        }
-      ]
-    });
-  }
+// In your extension's activate function:
+module.exports = async (api, config) => {
+  const context = code.createExtensionContext({
+    api,
+    config,
+    extensionPath: __dirname
+  });
 
-  deactivate() {
-    console.log(`${this.name} deactivated`);
-  }
+ 
+
+  // Register a simple command
+  code.registerCommand(context, 'my-js.hello', () => {
+   code.showConfirmDialog(context, 'Hello', {
+     title: 'Hello',
+     message: 'Extension loaded successfully!',
+     type: 'info',
+     buttonLabel: 'OK'
+   });
+  })
+
+  
+
+  code.registerMenu(context, {
+    id: 'my-menu',
+    label: 'My Extension',
+    items: [
+      {
+        id: 'my-menu.action',
+        label: 'Execute Action',
+        command: 'my-js.hello'
+      }
+    ]
+  });
+  
+  code.registerStatusBar(context, {
+    id: 'my-status-bar',
+    text: 'My Status Bar',
+  });
+
+  console.log('Extension loaded:', context.name);
+};
+
+```
+
+#### ES Modules
+
+```javascript
+import code from '@codeinspector/extension-handler';
+
+// In your extension's activate function:
+export function activate(api, config, extensionPath) {
+  const context = createExtensionContext({
+    api,
+    config,
+    extensionPath
+  });
+
+  // Register a command
+  registerCommand(context, 'myext.action', () => {
+    showNotification(context, 'My Extension', 'Action executed!');
+    return { status: 'success' };
+  });
+
+  // Register a menu
+  registerMenu(context, {
+    id: 'myext-menu',
+    label: 'My Extension',
+    submenu: [
+      {
+        id: 'myext.action',
+        label: 'Execute Action',
+        command: 'myext.action'
+      }
+    ]
+  });
 }
-
-module.exports = MyExtension;
 ```
 
 ## Extension Manifest
@@ -64,22 +114,43 @@ Create a `manifest.json` in your extension root:
 
 ## API Reference
 
-### Methods
+### `createExtensionContext(options)`
 
-#### `registerCommand(commandId: string, handler: Function): void`
+Create an extension context with the provided API.
+
+```javascript
+const context = createExtensionContext({
+  api,           // Extension API reference
+  config,        // Extension configuration
+  extensionPath  // Path to extension directory
+});
+```
+
+Returns an object with:
+
+- `api` - Extension API reference
+- `config` - Extension configuration
+- `extensionPath` - Extension directory path
+- `name` - Extension name
+- `version` - Extension version
+- `id` - Extension ID
+
+### `registerCommand(context, commandId, handler)`
+
 Register a command that can be executed from the UI or command palette.
 
 ```javascript
-this.registerCommand('ext.doSomething', (args) => {
+registerCommand(context, 'ext.doSomething', (args) => {
   return { result: 'done' };
 });
 ```
 
-#### `registerMenu(menuConfig: MenuConfig): void`
+### `registerMenu(context, menuConfig)`
+
 Register a menu with items and submenus.
 
 ```javascript
-this.registerMenu({
+registerMenu(context, {
   id: 'ext-menu',
   label: 'My Menu',
   submenu: [
@@ -92,81 +163,138 @@ this.registerMenu({
 });
 ```
 
-#### `executeCommand(commandId: string, args?: any): any`
+### `registerCommandMenu(context, commandMenuConfig)`
+
+Register a command menu item (appears in command palette).
+
+```javascript
+registerCommandMenu(context, {
+  id: 'ext.quickAction',
+  title: 'Quick Action',
+  command: 'ext.quickAction',
+  keybinding: 'ctrl+shift+p'
+});
+```
+
+### `executeCommand(context, commandId, args)`
+
 Execute a registered command.
 
 ```javascript
-const result = this.executeCommand('ext.doSomething', { key: 'value' });
+const result = executeCommand(context, 'ext.doSomething', { key: 'value' });
 ```
 
-#### `showNotification(title: string, message: string): void`
+### `showNotification(context, title, message, type)`
+
 Show a notification to the user.
 
 ```javascript
-this.showNotification('Success', 'Operation completed!');
+showNotification(context, 'Success', 'Operation completed!', 'info');
+// type: 'info' | 'warn' | 'error'
 ```
 
-#### `getSystemInfo(): SystemInfo`
+### `showProgress(context, title, message, progress)`
+
+Show a progress indicator.
+
+```javascript
+showProgress(context, 'Loading', 'Processing files...', 50);
+// progress: 0-100
+```
+
+### `registerActivityBar(context, id, title, icon, status)`
+
+Register an activity bar item.
+
+```javascript
+registerActivityBar(context, 'activity-1', 'My Activity', 'circle', 'active');
+// icon: 'circle' | 'spinner' | 'check' | 'x'
+// status: 'active' | 'pending' | 'success' | 'error'
+```
+
+### `updateActivityBar(context, id, updates)`
+
+Update an activity bar item.
+
+```javascript
+updateActivityBar(context, 'activity-1', {
+  title: 'Updated Title',
+  status: 'success'
+});
+```
+
+### `removeActivityBar(context, id)`
+
+Remove an activity bar item.
+
+```javascript
+removeActivityBar(context, 'activity-1');
+```
+
+### `registerWebview(context, id, title, htmlContent)`
+
+Register an HTML webview.
+
+```javascript
+registerWebview(context, 'webview-1', 'My Webview', '<div>Content</div>');
+```
+
+### `updateWebview(context, id, htmlContent)`
+
+Update a webview's HTML content.
+
+```javascript
+updateWebview(context, 'webview-1', '<div>Updated Content</div>');
+```
+
+### `removeWebview(context, id)`
+
+Remove a webview.
+
+```javascript
+removeWebview(context, 'webview-1');
+```
+
+### `showQuickPick(context, items, options)`
+
+Show a quick pick dialog.
+
+```javascript
+const selected = await showQuickPick(context, [
+  {
+    label: 'Option 1',
+    description: 'First option',
+    detail: 'Details about option 1',
+    value: { id: 1 }
+  },
+  {
+    label: 'Option 2',
+    description: 'Second option',
+    value: { id: 2 }
+  }
+], {
+  title: 'Select an option',
+  placeHolder: 'Type to filter...'
+});
+```
+
+### `getSystemInfo(context)`
+
 Get system information (platform, architecture, etc.).
 
 ```javascript
-const info = this.getSystemInfo();
+const info = getSystemInfo(context);
 console.log(info.platform); // 'win32', 'darwin', 'linux'
 console.log(info.arch);     // 'x64', 'arm64', etc.
+console.log(info.homeDir);  // Home directory path
 ```
 
-## TypeScript Support
+## Version History
 
-TypeScript types are included. For TypeScript extensions:
-
-```typescript
-import Extension, {
-  ExtensionAPI,
-  ExtensionConfig,
-  MenuConfig,
-  SystemInfo
-} from '@windowsworldcartoon/codeinspector-extension-handler';
-
-class MyExtension extends Extension {
-  activate(): void {
-    // Your code here
-  }
-}
-
-export default MyExtension;
-```
-
-## Publishing Your Extension
-
-Use the CodeInspector CLI to publish your extension:
-
-```bash
-codeinspector publish <path-to-extension>
-```
-
-This command will:
-1. Validate your extension manifest
-2. Initialize a git repository (if needed)
-3. Create an initial commit
-4. Push to a git repository or GitHub
-5. Create a GitHub release
-
-Example:
-```bash
-codeinspector publish ./my-extension
-```
-
-You can also use the CodeInspector CLI interactively without specifying a path:
-```bash
-codeinspector publish
-```
-
-The CLI will guide you through:
-- Selecting where to publish (GitHub or git repository)
-- Adding remote origin if needed
-- Creating and pushing commits
-- Creating GitHub releases with your package version
+- **1.0.0** - Initial release
 
 ## License
 
-MIT
+This extension is released under the [MIT License](https://opensource.org/licenses/MIT).
+
+## Note: the Application CodeInspector is not currently out yet but will be soon. Please check back later for updates
